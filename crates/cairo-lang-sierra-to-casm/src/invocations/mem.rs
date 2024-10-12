@@ -10,7 +10,7 @@ use cairo_lang_utils::casts::IntoOrPanic;
 use cairo_lang_utils::extract_matches;
 use itertools::{repeat_n, zip_eq};
 
-use super::{CompiledInvocation, CompiledInvocationBuilder, InvocationError, misc};
+use super::{misc, CompiledInvocation, CompiledInvocationBuilder, InvocationError};
 use crate::environment::frame_state;
 use crate::references::ReferenceExpression;
 
@@ -101,7 +101,9 @@ fn build_store_temp(
         vec![],
         [[ReferenceExpression {
             cells: (-type_size..0)
-                .map(|i| CellExpression::Deref(CellRef { register: Register::AP, offset: i }))
+                .map(|i| {
+                    CellExpression::Deref(CellRef { register: Register::AP, offset: i as i32 })
+                })
                 .collect(),
         }]
         .into_iter()]
@@ -159,7 +161,10 @@ fn build_alloc_local(
         [ReferenceExpression {
             cells: (0..allocation_size)
                 .map(|i| {
-                    CellExpression::Deref(CellRef { register: Register::FP, offset: slot + i })
+                    CellExpression::Deref(CellRef {
+                        register: Register::FP,
+                        offset: (slot + i) as i32,
+                    })
                 })
                 .collect(),
         }]

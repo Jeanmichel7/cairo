@@ -30,7 +30,7 @@ fn test_res_operand_ap_change() {
 
 #[test]
 fn test_overflow() {
-    let ap_based_operand = CellRef { register: Register::AP, offset: i16::MIN };
+    let ap_based_operand = CellRef { register: Register::AP, offset: i32::MIN };
 
     assert_eq!(
         ap_based_operand.apply_ap_change(ApChange::Known(1)),

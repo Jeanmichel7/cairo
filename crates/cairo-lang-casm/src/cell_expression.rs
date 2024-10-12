@@ -29,7 +29,7 @@ impl core::fmt::Display for CellOperator {
 pub enum CellExpression {
     Deref(CellRef),
     /// Represents an expression of the form `[[cell_ref] + offset]`.
-    DoubleDeref(CellRef, i16),
+    DoubleDeref(CellRef, i32),
     Immediate(BigInt),
     /// Represents an expression of the form `[cell_ref] + [cell_ref]` or `[cell_ref] + imm`.
     ///
@@ -72,21 +72,21 @@ impl CellExpression {
     }
 
     /// Given `[ref] + offset` returns `([ref], offset)`.
-    pub fn to_deref_with_offset(&self) -> Option<(CellRef, i16)> {
+    pub fn to_deref_with_offset(&self) -> Option<(CellRef, i32)> {
         match self {
-            CellExpression::Deref(cell) => Some((*cell, 0i16)),
+            CellExpression::Deref(cell) => Some((*cell, 0i32)),
             CellExpression::BinOp {
                 op: CellOperator::Add,
                 a: cell,
                 b: DerefOrImmediate::Immediate(offset),
-            } => Some((*cell, offset.value.to_i16()?)),
+            } => Some((*cell, offset.value.to_i32()?)),
             _ => None,
         }
     }
 
     /// Returns the reference as a buffer with at least `required_slack` next cells that can be
     /// written as an instruction offset.
-    pub fn to_buffer(&self, required_slack: i16) -> Option<CellExpression> {
+    pub fn to_buffer(&self, required_slack: i32) -> Option<CellExpression> {
         let (base, offset) = self.to_deref_with_offset()?;
         offset.checked_add(required_slack)?;
         if offset == 0 {

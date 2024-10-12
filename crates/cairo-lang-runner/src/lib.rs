@@ -24,9 +24,9 @@ use cairo_lang_sierra::program_registry::{ProgramRegistry, ProgramRegistryError}
 use cairo_lang_sierra_ap_change::ApChangeError;
 use cairo_lang_sierra_to_casm::compiler::{CairoProgram, CompilationError, SierraToCasmConfig};
 use cairo_lang_sierra_to_casm::metadata::{
-    Metadata, MetadataComputationConfig, MetadataError, calc_metadata, calc_metadata_ap_change_only,
+    calc_metadata, calc_metadata_ap_change_only, Metadata, MetadataComputationConfig, MetadataError,
 };
-use cairo_lang_sierra_type_size::{TypeSizeMap, get_type_size_map};
+use cairo_lang_sierra_type_size::{get_type_size_map, TypeSizeMap};
 use cairo_lang_starknet::contract::ContractInfo;
 use cairo_lang_utils::casts::IntoOrPanic;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
@@ -43,7 +43,7 @@ pub use casm_run::{CairoHintProcessor, StarknetState};
 use itertools::chain;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
-use profiling::{ProfilingInfo, user_function_idx_by_sierra_statement_idx};
+use profiling::{user_function_idx_by_sierra_statement_idx, ProfilingInfo};
 use starknet_types_core::felt::Felt as Felt252;
 use thiserror::Error;
 
@@ -509,7 +509,7 @@ impl SierraCasmRunner {
 
     /// Returns the final values and type of all `func`s returning variables.
     pub fn get_results_data(
-        return_types: &[(GenericTypeId, i16)],
+        return_types: &[(GenericTypeId, i32)],
         cells: &[Option<Felt252>],
         mut ap: usize,
     ) -> (Vec<(GenericTypeId, Vec<Felt252>)>, Option<Felt252>) {
@@ -553,7 +553,11 @@ impl SierraCasmRunner {
             .funcs
             .iter()
             .find(|f| {
-                if let Some(name) = &f.id.debug_name { name.ends_with(name_suffix) } else { false }
+                if let Some(name) = &f.id.debug_name {
+                    name.ends_with(name_suffix)
+                } else {
+                    false
+                }
             })
             .ok_or_else(|| RunnerError::MissingFunction { suffix: name_suffix.to_owned() })
     }
@@ -562,13 +566,13 @@ impl SierraCasmRunner {
     fn generic_id_and_size_from_concrete(
         &self,
         types: &[ConcreteTypeId],
-    ) -> Vec<(GenericTypeId, i16)> {
+    ) -> Vec<(GenericTypeId, i32)> {
         types
             .iter()
             .map(|pt| {
                 let info = self.get_info(pt);
                 let generic_id = &info.long_id.generic_id;
-                let size = self.type_sizes[pt];
+                let size = self.type_sizes[pt] as i32;
                 (generic_id.clone(), size)
             })
             .collect()
@@ -582,7 +586,7 @@ impl SierraCasmRunner {
     }
 
     pub fn create_entry_code_from_params(
-        param_types: &[(GenericTypeId, i16)],
+        param_types: &[(GenericTypeId, i32)],
         args: &[Arg],
         initial_gas: usize,
         code_offset: usize,
@@ -613,7 +617,7 @@ impl SierraCasmRunner {
 
         let emulated_builtins = HashSet::from([SystemType::ID]);
 
-        let mut ap_offset: i16 = 0;
+        let mut ap_offset: i32 = 0;
         let mut array_args_data_iter = prep_array_args(&mut ctx, args, &mut ap_offset).into_iter();
         let after_arrays_data_offset = ap_offset;
         if param_types.iter().any(|(ty, _)| ty == &SegmentArenaType::ID) {
@@ -818,16 +822,16 @@ pub fn initialize_vm(context: RunFunctionContext<'_>) -> Result<(), Box<CairoRun
 /// The information on an array argument that was added to the stack.
 struct ArrayDataInfo {
     /// The offset of the pointer to the array data in the stack.
-    ptr_offset: i16,
+    ptr_offset: i32,
     /// The size of the array data in the stack.
-    size: i16,
+    size: i32,
 }
 
 /// Adds an argument to the stack, updating the ap_offset and the array_data_iter.
 fn add_arg_to_stack(
     ctx: &mut CasmContext,
     arg: &Arg,
-    ap_offset: &mut i16,
+    ap_offset: &mut i32,
     array_data_iter: &mut impl Iterator<Item = ArrayDataInfo>,
 ) {
     match arg {
@@ -850,7 +854,7 @@ fn add_arg_to_stack(
 
 /// Prepares the array arguments for the stack, updating the ap_offset and returning the
 /// array_args_data.
-fn prep_array_args(ctx: &mut CasmContext, args: &[Arg], ap_offset: &mut i16) -> Vec<ArrayDataInfo> {
+fn prep_array_args(ctx: &mut CasmContext, args: &[Arg], ap_offset: &mut i32) -> Vec<ArrayDataInfo> {
     let mut array_args_data = vec![];
     for arg in args {
         let Arg::Array(values) = arg else { continue };

@@ -12,7 +12,7 @@ use self::storage::{
 use super::misc::{build_identity, build_single_cell_const, build_unsigned_try_from_felt252};
 use super::{CompiledInvocation, CompiledInvocationBuilder};
 use crate::invocations::{
-    CostValidationInfo, InvocationError, add_input_variables, get_non_fallthrough_statement_id,
+    add_input_variables, get_non_fallthrough_statement_id, CostValidationInfo, InvocationError,
 };
 
 mod testing;
@@ -93,8 +93,8 @@ pub fn build(
 pub fn build_syscalls<const INPUT_COUNT: usize, const OUTPUT_COUNT: usize>(
     builder: CompiledInvocationBuilder<'_>,
     selector: &str,
-    input_sizes: [i16; INPUT_COUNT],
-    output_sizes: [i16; OUTPUT_COUNT],
+    input_sizes: [i32; INPUT_COUNT],
+    output_sizes: [i32; OUTPUT_COUNT],
 ) -> Result<CompiledInvocation, InvocationError> {
     let selector_imm = BigInt::from_bytes_be(num_bigint::Sign::Plus, selector.as_bytes());
     // +2 for Gas and System builtins.
@@ -108,10 +108,10 @@ pub fn build_syscalls<const INPUT_COUNT: usize, const OUTPUT_COUNT: usize>(
     let [system] = builder.refs[1].expression.try_unpack()?;
     let mut casm_builder = CasmBuilder::default();
     // +2 for Gas and Selector cells.
-    let total_input_size = input_sizes.iter().sum::<i16>() + 2;
-    let success_output_size = output_sizes.iter().sum::<i16>();
+    let total_input_size = input_sizes.iter().sum::<i32>() + 2;
+    let success_output_size = output_sizes.iter().sum::<i32>();
     // Start and end of revert reason array.
-    let failure_output_size: i16 = 2;
+    let failure_output_size: i32 = 2;
     add_input_variables! {casm_builder,
         deref gas_builtin;
         // +2 for Gas and failure flag.
@@ -175,10 +175,11 @@ pub fn build_syscalls<const INPUT_COUNT: usize, const OUTPUT_COUNT: usize>(
             ("Fallthrough", &success_vars, None),
             (
                 "Failure",
-                &[&updated_gas_builtin, &failure_final_system[..], &[
-                    response_vars[0],
-                    response_vars[1],
-                ]],
+                &[
+                    &updated_gas_builtin,
+                    &failure_final_system[..],
+                    &[response_vars[0], response_vars[1]],
+                ],
                 Some(failure_handle_statement_id),
             ),
         ],

@@ -43,7 +43,7 @@ fn build_into_box(
         );
         for (index, cell) in operand.cells.iter().enumerate() {
             add_input_variables!(casm_builder, deref cell;);
-            casm_build_extend!(casm_builder, assert cell = addr[index as i16];);
+            casm_build_extend!(casm_builder, assert cell = addr[index as i32];);
         }
         addr
     };
@@ -65,7 +65,9 @@ fn build_unbox(
         .ok_or(InvocationError::InvalidReferenceExpressionForArgument)?;
     Ok(builder.build_only_reference_changes(
         [ReferenceExpression {
-            cells: (0..size).map(|idx| CellExpression::DoubleDeref(operand, idx)).collect(),
+            cells: (0..size)
+                .map(|idx: i16| CellExpression::DoubleDeref(operand, idx as i32))
+                .collect(),
         }]
         .into_iter(),
     ))

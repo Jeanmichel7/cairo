@@ -6,7 +6,7 @@ use cairo_lang_sierra::ids::ConcreteTypeId;
 
 use super::{CompiledInvocation, CompiledInvocationBuilder, InvocationError};
 use crate::invocations::{
-    BuiltinInfo, CostValidationInfo, add_input_variables, get_non_fallthrough_statement_id,
+    add_input_variables, get_non_fallthrough_statement_id, BuiltinInfo, CostValidationInfo,
 };
 
 /// Builds instructions for Sierra array operations.
@@ -125,7 +125,7 @@ fn build_array_append(
     let mut casm_builder = CasmBuilder::default();
     add_input_variables! {casm_builder,
         buffer(0) arr_start;
-        buffer(elem.cells.len() as i16) arr_end;
+        buffer(elem.cells.len() as i32) arr_end;
     };
     for cell in &elem.cells {
         add_input_variables!(casm_builder, deref cell;);

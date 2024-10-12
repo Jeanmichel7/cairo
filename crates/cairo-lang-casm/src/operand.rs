@@ -40,7 +40,7 @@ pub enum ResOperand {
     #[cfg_attr(feature = "parity-scale-codec", codec(index = 0))]
     Deref(CellRef),
     #[cfg_attr(feature = "parity-scale-codec", codec(index = 1))]
-    DoubleDeref(CellRef, i16),
+    DoubleDeref(CellRef, i32),
     #[cfg_attr(feature = "parity-scale-codec", codec(index = 2))]
     Immediate(BigIntAsHex),
     #[cfg_attr(feature = "parity-scale-codec", codec(index = 3))]
@@ -81,7 +81,7 @@ impl<T: Into<BigIntAsHex>> From<T> for ResOperand {
 )]
 pub struct CellRef {
     pub register: Register,
-    pub offset: i16,
+    pub offset: i32,
 }
 impl Display for CellRef {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -90,7 +90,7 @@ impl Display for CellRef {
 }
 
 /// Returns an AP DerefOperand with the given offset.
-pub fn ap_cell_ref(offset: i16) -> CellRef {
+pub fn ap_cell_ref(offset: i32) -> CellRef {
     CellRef { register: Register::AP, offset }
 }
 

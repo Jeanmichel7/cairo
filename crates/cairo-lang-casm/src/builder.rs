@@ -37,7 +37,7 @@ pub struct State {
     /// The value per variable.
     vars: OrderedHashMap<Var, CellExpression>,
     /// The number of allocated variables from the beginning of the run.
-    allocated: i16,
+    allocated: i32,
     /// The AP change since the beginning of the run.
     pub ap_change: usize,
     /// The number of casm steps since the beginning of the run.
@@ -357,18 +357,21 @@ impl CasmBuilder {
     /// Increments a buffer and allocates and returns variable pointing to its previous value.
     pub fn get_ref_and_inc(&mut self, buffer: Var) -> Var {
         let (cell, offset) = self.as_cell_ref_plus_const(buffer, 0, false);
-        self.main_state.vars.insert(buffer, CellExpression::BinOp {
-            op: CellOperator::Add,
-            a: cell,
-            b: deref_or_immediate!(BigInt::from(offset) + 1),
-        });
+        self.main_state.vars.insert(
+            buffer,
+            CellExpression::BinOp {
+                op: CellOperator::Add,
+                a: cell,
+                b: deref_or_immediate!(BigInt::from(offset) + 1),
+            },
+        );
         self.add_var(CellExpression::DoubleDeref(cell, offset))
     }
 
     /// Increments a buffer and returning the previous value it pointed to.
     /// Useful for writing, reading and referencing values.
     /// `buffer` must be a cell reference, or a cell reference with a small added constant.
-    fn buffer_get_and_inc(&mut self, buffer: Var) -> (CellRef, i16) {
+    fn buffer_get_and_inc(&mut self, buffer: Var) -> (CellRef, i32) {
         let (base, offset) = match self.get_value(buffer, false) {
             CellExpression::Deref(cell) => (cell, 0),
             CellExpression::BinOp {
@@ -378,11 +381,14 @@ impl CasmBuilder {
             } => (a, imm.value.try_into().expect("Too many buffer writes.")),
             _ => panic!("Not a valid buffer."),
         };
-        self.main_state.vars.insert(buffer, CellExpression::BinOp {
-            op: CellOperator::Add,
-            a: base,
-            b: deref_or_immediate!(offset + 1),
-        });
+        self.main_state.vars.insert(
+            buffer,
+            CellExpression::BinOp {
+                op: CellOperator::Add,
+                a: base,
+                b: deref_or_immediate!(offset + 1),
+            },
+        );
         (base, offset)
     }
 
@@ -399,7 +405,7 @@ impl CasmBuilder {
     /// Increases the AP change by `size`, without adding an instruction.
     pub fn increase_ap_change(&mut self, amount: usize) {
         self.main_state.ap_change += amount;
-        self.main_state.allocated += amount.into_or_panic::<i16>();
+        self.main_state.allocated += amount.into_or_panic::<i32>();
     }
 
     /// Returns a variable that is the `op` of `lhs` and `rhs`.
@@ -431,7 +437,7 @@ impl CasmBuilder {
 
     /// Returns a variable that is `[[var] + offset]`.
     /// `var` must be a cell reference, or a cell ref plus a small constant.
-    pub fn double_deref(&mut self, var: Var, offset: i16) -> Var {
+    pub fn double_deref(&mut self, var: Var, offset: i32) -> Var {
         let (cell, full_offset) = self.as_cell_ref_plus_const(var, offset, false);
         self.add_var(CellExpression::DoubleDeref(cell, full_offset))
     }
@@ -518,7 +524,11 @@ impl CasmBuilder {
         let mut main_vars = OrderedHashMap::<Var, CellExpression>::default();
         let ap_change = self.main_state.ap_change;
         let cell_to_var_flags = |cell: &CellRef| {
-            if cell.register == Register::AP { (true, false) } else { (false, true) }
+            if cell.register == Register::AP {
+                (true, false)
+            } else {
+                (false, true)
+            }
         };
         for (var, value) in self.main_state.vars.iter() {
             let (function_var, main_var) = match value {
@@ -622,7 +632,11 @@ impl CasmBuilder {
 
     /// Returns `var`s value, with fixed ap if `adjust_ap` is true.
     fn get_value(&self, var: Var, adjust_ap: bool) -> CellExpression {
-        if adjust_ap { self.main_state.get_adjusted(var) } else { self.main_state.get_value(var) }
+        if adjust_ap {
+            self.main_state.get_adjusted(var)
+        } else {
+            self.main_state.get_value(var)
+        }
     }
 
     /// Returns `var`s value as a cell reference, with fixed ap if `adjust_ap` is true.
@@ -646,9 +660,9 @@ impl CasmBuilder {
     fn as_cell_ref_plus_const(
         &self,
         var: Var,
-        additional_offset: i16,
+        additional_offset: i32,
         adjust_ap: bool,
-    ) -> (CellRef, i16) {
+    ) -> (CellRef, i32) {
         match self.get_value(var, adjust_ap) {
             CellExpression::Deref(cell) => (cell, additional_offset),
             CellExpression::BinOp {
@@ -885,8 +899,8 @@ macro_rules! casm_build_extend {
     ($builder:ident, let ($($var_name:ident),*) = call $target:ident; $($tok:tt)*) => {
         $builder.call($crate::builder::ToOwned::to_owned(core::stringify!($target)));
 
-        let __var_count = {0i16 $(+ (stringify!($var_name), 1i16).1)*};
-        let mut __var_index = 0;
+        let __var_count = {0i16 $(+ (stringify!($var_name), 1i16).1)*} as i32;
+        let mut __var_index = 0_i32;
         $(
             let $var_name = $builder.add_var($crate::cell_expression::CellExpression::Deref($crate::operand::CellRef {
                 offset: __var_index - __var_count,

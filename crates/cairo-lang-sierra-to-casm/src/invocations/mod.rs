@@ -13,20 +13,20 @@ use cairo_lang_sierra::extensions::{ConcreteLibfunc, OutputVarReferenceInfo};
 use cairo_lang_sierra::ids::ConcreteTypeId;
 use cairo_lang_sierra::program::{BranchInfo, BranchTarget, Invocation, StatementIdx};
 use cairo_lang_sierra_ap_change::core_libfunc_ap_change::{
-    InvocationApChangeInfoProvider, core_libfunc_ap_change,
+    core_libfunc_ap_change, InvocationApChangeInfoProvider,
 };
-use cairo_lang_sierra_gas::core_libfunc_cost::{InvocationCostInfoProvider, core_libfunc_cost};
+use cairo_lang_sierra_gas::core_libfunc_cost::{core_libfunc_cost, InvocationCostInfoProvider};
 use cairo_lang_sierra_gas::objects::ConstCost;
 use cairo_lang_sierra_type_size::TypeSizeMap;
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
 use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
-use itertools::{Itertools, chain, zip_eq};
+use itertools::{chain, zip_eq, Itertools};
 use num_bigint::BigInt;
 use thiserror::Error;
 
 use crate::circuit::CircuitsInfo;
-use crate::environment::Environment;
 use crate::environment::frame_state::{FrameState, FrameStateError};
+use crate::environment::Environment;
 use crate::metadata::Metadata;
 use crate::references::{
     OutputReferenceValue, OutputReferenceValueIntroductionPoint, ReferenceExpression,
@@ -288,7 +288,7 @@ pub struct CompiledInvocation {
 /// Checks that the list of references is contiguous on the stack and ends at ap - 1.
 /// This is the requirement for function call and return statements.
 pub fn check_references_on_stack(refs: &[ReferenceValue]) -> Result<(), InvocationError> {
-    let mut expected_offset: i16 = -1;
+    let mut expected_offset: i32 = -1;
     for reference in refs.iter().rev() {
         for cell_expr in reference.expression.cells.iter().rev() {
             match cell_expr {
@@ -633,7 +633,11 @@ impl CompiledInvocationBuilder<'_> {
                 &FAKE_CELL
             }
         });
-        if let Some(err) = last_err { Err(err) } else { Ok(result) }
+        if let Some(err) = last_err {
+            Err(err)
+        } else {
+            Ok(result)
+        }
     }
 }
 
@@ -746,10 +750,9 @@ trait ReferenceExpressionView: Sized {
 /// conditional jump.
 pub fn get_non_fallthrough_statement_id(builder: &CompiledInvocationBuilder<'_>) -> StatementIdx {
     match builder.invocation.branches.as_slice() {
-        [
-            BranchInfo { target: BranchTarget::Fallthrough, results: _ },
-            BranchInfo { target: BranchTarget::Statement(target_statement_id), results: _ },
-        ] => *target_statement_id,
+        [BranchInfo { target: BranchTarget::Fallthrough, results: _ }, BranchInfo { target: BranchTarget::Statement(target_statement_id), results: _ }] => {
+            *target_statement_id
+        }
         _ => panic!("malformed invocation"),
     }
 }

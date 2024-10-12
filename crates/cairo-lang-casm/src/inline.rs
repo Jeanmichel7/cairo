@@ -251,28 +251,28 @@ pub struct CasmContext {
 #[macro_export]
 macro_rules! deref {
     ([ap + $offset:expr]) => {
-        $crate::operand::CellRef { register: $crate::reg!(ap), offset: $offset }
+        $crate::operand::CellRef { register: $crate::reg!(ap), offset: $offset as i32 }
     };
     ([fp + $offset:expr]) => {
-        $crate::operand::CellRef { register: $crate::reg!(fp), offset: $offset }
+        $crate::operand::CellRef { register: $crate::reg!(fp), offset: $offset as i32 }
     };
     ([& $var:ident + $offset:expr]) => {
-        $crate::operand::CellRef { register: $var.register, offset: $var.offset + $offset }
+        $crate::operand::CellRef { register: $var.register, offset: $var.offset + $offset as i32 }
     };
     ([ap - $offset:expr]) => {
-        $crate::operand::CellRef { register: $crate::reg!(ap), offset: -$offset }
+        $crate::operand::CellRef { register: $crate::reg!(ap), offset: -$offset as i32 }
     };
     ([fp - $offset:expr]) => {
-        $crate::operand::CellRef { register: $crate::reg!(fp), offset: -$offset }
+        $crate::operand::CellRef { register: $crate::reg!(fp), offset: -$offset as i32 }
     };
     ([& $var:ident - $offset:expr]) => {
-        $crate::operand::CellRef { register: $var.register, offset: $var.offset - $offset }
+        $crate::operand::CellRef { register: $var.register, offset: $var.offset - $offset as i32 }
     };
     ([ap]) => {
-        $crate::operand::CellRef { register: $crate::reg!(ap), offset: 0 }
+        $crate::operand::CellRef { register: $crate::reg!(ap), offset: 0 as i32 }
     };
     ([fp]) => {
-        $crate::operand::CellRef { register: $crate::reg!(fp), offset: 0 }
+        $crate::operand::CellRef { register: $crate::reg!(fp), offset: 0 as i32 }
     };
     ([& $var:ident]) => {
         $var

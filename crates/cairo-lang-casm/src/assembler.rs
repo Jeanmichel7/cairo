@@ -60,9 +60,9 @@ pub enum Opcode {
 /// The low level representation of a cairo instruction.
 #[derive(Debug, Eq, PartialEq)]
 pub struct InstructionRepr {
-    pub off0: i16,
-    pub off1: i16,
-    pub off2: i16,
+    pub off0: i32,
+    pub off1: i32,
+    pub off2: i32,
     pub imm: Option<BigInt>,
     pub dst_register: Register,
     pub op0_register: Register,
@@ -225,8 +225,8 @@ impl DerefOrImmediate {
 
 /// The part of the instruction describing the res operand.
 struct ResDescription {
-    off1: i16,
-    off2: i16,
+    off1: i32,
+    off2: i32,
     imm: Option<BigInt>,
     op0_register: Register,
     op1_addr: Op1Addr,

@@ -58,18 +58,24 @@ impl NoGenericArgsGenericLibfunc for WithdrawGasLibfunc {
             branch_signatures: vec![
                 // Success:
                 BranchSignature {
-                    vars: vec![rc_output_info.clone(), OutputVarInfo {
-                        ty: gas_builtin_type.clone(),
-                        ref_info: OutputVarReferenceInfo::NewTempVar { idx: 0 },
-                    }],
+                    vars: vec![
+                        rc_output_info.clone(),
+                        OutputVarInfo {
+                            ty: gas_builtin_type.clone(),
+                            ref_info: OutputVarReferenceInfo::NewTempVar { idx: 0 },
+                        },
+                    ],
                     ap_change: SierraApChange::Known { new_vars_only: false },
                 },
                 // Failure:
                 BranchSignature {
-                    vars: vec![rc_output_info, OutputVarInfo {
-                        ty: gas_builtin_type,
-                        ref_info: OutputVarReferenceInfo::SameAsParam { param_idx: 1 },
-                    }],
+                    vars: vec![
+                        rc_output_info,
+                        OutputVarInfo {
+                            ty: gas_builtin_type,
+                            ref_info: OutputVarReferenceInfo::SameAsParam { param_idx: 1 },
+                        },
+                    ],
                     ap_change: SierraApChange::Known { new_vars_only: false },
                 },
             ],
@@ -177,8 +183,8 @@ impl CostTokenType {
 
     /// Iterates over the tokens that are used in the Sierra->Casm compilation (pre-cost token types
     /// and [CostTokenType::Const]).
-    pub fn iter_casm_tokens()
-    -> std::iter::Chain<std::slice::Iter<'static, Self>, std::slice::Iter<'static, Self>> {
+    pub fn iter_casm_tokens(
+    ) -> std::iter::Chain<std::slice::Iter<'static, Self>, std::slice::Iter<'static, Self>> {
         chain!(Self::iter_precost(), [CostTokenType::Const].iter())
     }
 
@@ -204,7 +210,7 @@ impl CostTokenType {
         self.name().to_case(convert_case::Case::UpperCamel)
     }
 
-    pub fn offset_in_builtin_costs(&self) -> i16 {
+    pub fn offset_in_builtin_costs(&self) -> i32 {
         match self {
             CostTokenType::Const
             | CostTokenType::Step
@@ -285,18 +291,24 @@ impl NoGenericArgsGenericLibfunc for BuiltinCostWithdrawGasLibfunc {
             branch_signatures: vec![
                 // Success:
                 BranchSignature {
-                    vars: vec![rc_output_info.clone(), OutputVarInfo {
-                        ty: gas_builtin_type.clone(),
-                        ref_info: OutputVarReferenceInfo::NewTempVar { idx: 0 },
-                    }],
+                    vars: vec![
+                        rc_output_info.clone(),
+                        OutputVarInfo {
+                            ty: gas_builtin_type.clone(),
+                            ref_info: OutputVarReferenceInfo::NewTempVar { idx: 0 },
+                        },
+                    ],
                     ap_change: SierraApChange::Known { new_vars_only: false },
                 },
                 // Failure:
                 BranchSignature {
-                    vars: vec![rc_output_info, OutputVarInfo {
-                        ty: gas_builtin_type,
-                        ref_info: OutputVarReferenceInfo::SameAsParam { param_idx: 1 },
-                    }],
+                    vars: vec![
+                        rc_output_info,
+                        OutputVarInfo {
+                            ty: gas_builtin_type,
+                            ref_info: OutputVarReferenceInfo::SameAsParam { param_idx: 1 },
+                        },
+                    ],
                     ap_change: SierraApChange::Known { new_vars_only: false },
                 },
             ],

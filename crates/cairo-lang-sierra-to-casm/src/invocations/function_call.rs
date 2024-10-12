@@ -3,11 +3,11 @@ use std::collections::VecDeque;
 use cairo_lang_casm::casm;
 use cairo_lang_casm::cell_expression::CellExpression;
 use cairo_lang_casm::operand::{CellRef, Register};
-use cairo_lang_sierra::extensions::ConcreteLibfunc;
 use cairo_lang_sierra::extensions::function_call::SignatureAndFunctionConcreteLibfunc;
+use cairo_lang_sierra::extensions::ConcreteLibfunc;
 
 use super::{
-    CompiledInvocation, CompiledInvocationBuilder, InvocationError, check_references_on_stack,
+    check_references_on_stack, CompiledInvocation, CompiledInvocationBuilder, InvocationError,
 };
 use crate::references::ReferenceExpression;
 use crate::relocations::{Relocation, RelocationEntry};
@@ -33,7 +33,9 @@ pub fn build(
             .ok_or(InvocationError::UnknownVariableData)?;
         refs.push_front(ReferenceExpression {
             cells: ((offset - size + 1)..(offset + 1))
-                .map(|i| CellExpression::Deref(CellRef { register: Register::AP, offset: i }))
+                .map(|i| {
+                    CellExpression::Deref(CellRef { register: Register::AP, offset: i as i32 })
+                })
                 .collect(),
         });
         offset -= size;
