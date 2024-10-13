@@ -71,9 +71,9 @@ members = [
 exclude = ["ensure-no_std"]
 
 [workspace.package]
-version = "2.8.4"
+version = "2.8.5"
 edition = "2021"
-repository = "https://github.com/starkware-libs/cairo/"
+repository = "https://github.com/Jeanmichel7/cairo/"
 license = "Apache-2.0"
 license-file = "LICENSE"
 
